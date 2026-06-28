@@ -1,8 +1,11 @@
-@import "variables.css";
+/* @import "variables.css";
 @import "reset.css";
 @import "typography.css";
 @import "navbar.css";
 @import "hero.css";
 @import "cards.css";
-@import "footer.css";
+@import "footer.css"; */
 @import "responsive.css";
+@import "category.css";
+
+
