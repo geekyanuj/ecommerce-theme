@@ -16,26 +16,27 @@ get_header();
     <p style="font-size:.76rem;color:var(--text-s);margin-top:.5rem;position:relative;z-index:1;">Stone ground, pure
       wheat</p>
   </div> -->
-  <?php 
-  $categories = get_terms( array(
-  'taxonomy' => 'product_cat',
-  'hide_empty' => false, // Set to true to hide categories with 0 products
-  ) );
+  <?php
+  $categories = get_terms(array(
+    'taxonomy' => 'product_cat',
+    'hide_empty' => false, // Set to true to hide categories with 0 products
+  ));
 
-  
-  if(!empty($categories) && !is_wp_error($categories)) {
-      foreach($categories as $category) {
-          $category_link = get_term_link($category);
-          $category_name = $category->name;
-          $category_description = $category->description;
-          $thumbnail_id = get_term_meta($category->term_id, 'thumbnail_id', true);
-  
-          echo '<div class="cat-card" data-filter-shop="' . esc_attr($category->slug) . '">';
-          echo '<span class="cat-icon">' . wp_get_attachment_image($thumbnail_id, 'large') . '</span>';
-          echo '<span class="cat-lbl">' . esc_html($category_name) . '</span>';
-          echo '<p class="cat-description">' . esc_html($category_description) . '</p>';
-          echo '</div>';
-      }}
+
+  if (!empty($categories) && !is_wp_error($categories)) {
+    foreach ($categories as $category) {
+      $category_link = get_term_link($category);
+      $category_name = $category->name;
+      $category_description = $category->description;
+      $thumbnail_id = get_term_meta($category->term_id, 'thumbnail_id', true);
+
+      echo '<div class="cat-card" data-filter-shop="' . esc_attr($category->slug) . '">';
+      echo '<span class="cat-icon">' . wp_get_attachment_image($thumbnail_id, 'large') . '</span>';
+      echo '<span class="cat-lbl">' . esc_html($category_name) . '</span>';
+      echo '<p class="cat-description">' . esc_html($category_description) . '</p>';
+      echo '</div>';
+    }
+  }
   ?>
 
   <!-- <div class="cat-card" style="padding:2.5rem 1.5rem;" data-filter-shop="flour"><span class="cat-icon"

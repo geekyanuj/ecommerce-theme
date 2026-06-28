@@ -144,6 +144,9 @@
     <button class="modal-btn" onclick="handleBuyNow()">Confirm Order ✅</button>
   </div>
 </div>
+
+
+<!-- // ======= WHATSAPP MODAL ======= -->
 <div class="modal-overlay" id="modal-wa">
   <div class="modal-box">
     <button class="modal-close" id="wa-close-btn">✕</button>

@@ -46,117 +46,12 @@ addCursorHover(
   "a,button,.cat-card,.prod-card,.pay-method-card,.offer-card,.why-card,.rev-card,[data-page],[data-filter-shop],[data-wa]",
 );
 
-/* ===== PRODUCTS ===== */
-const PRODUCTS = [
-  {
-    id: 1,
-    name: "Premium Besan",
-    desc: "Freshly ground gram flour packed with nutrition.",
-    price: 149,
-    icon: "🧆",
-    badge: "Best Seller",
-    category: "flour",
-  },
-  {
-    id: 2,
-    name: "Stone Ground Atta",
-    desc: "Soft rotis, rich nutrition, authentic taste.",
-    price: 189,
-    icon: "🫓",
-    badge: "Top Rated",
-    category: "flour",
-  },
-  {
-    id: 3,
-    name: "Premium Basmati Rice",
-    desc: "Selected long-grain basmati for superior meals.",
-    price: 299,
-    icon: "🍚",
-    badge: "Premium",
-    category: "rice",
-  },
-  {
-    id: 4,
-    name: "Handpicked Chana Dal",
-    desc: "Healthy, protein-rich daily essential.",
-    price: 129,
-    icon: "🫘",
-    badge: "",
-    category: "pulses",
-  },
-  {
-    id: 5,
-    name: "Pure Red Chilli Powder",
-    desc: "Authentic spicy flavor for every recipe.",
-    price: 89,
-    icon: "🌶",
-    badge: "",
-    category: "spices",
-  },
-  {
-    id: 6,
-    name: "Organic Moong Dal",
-    desc: "Pure organic green moong, high protein.",
-    price: 159,
-    icon: "🌿",
-    badge: "Organic",
-    category: "organic",
-  },
-  {
-    id: 7,
-    name: "Pure Turmeric Powder",
-    desc: "Golden haldi, natural and fresh.",
-    price: 69,
-    icon: "🟡",
-    badge: "",
-    category: "spices",
-  },
-  {
-    id: 8,
-    name: "Mixed Dry Fruits",
-    desc: "Premium assorted nuts and dry fruits.",
-    price: 349,
-    icon: "🥜",
-    badge: "Premium",
-    category: "dryfruits",
-  },
-  {
-    id: 9,
-    name: "Sona Masoori Rice",
-    desc: "Light, fluffy everyday rice for families.",
-    price: 219,
-    icon: "🍛",
-    badge: "",
-    category: "rice",
-  },
-  {
-    id: 10,
-    name: "Organic Wheat Atta",
-    desc: "Stone ground organic whole wheat.",
-    price: 229,
-    icon: "🌾",
-    badge: "Organic",
-    category: "organic",
-  },
-  {
-    id: 11,
-    name: "Coriander Powder",
-    desc: "Fresh ground dhaniya, packed with aroma.",
-    price: 55,
-    icon: "🌱",
-    badge: "",
-    category: "spices",
-  },
-  {
-    id: 12,
-    name: "Combo Pack – Basics",
-    desc: "Atta + Besan + Dal — essential trio.",
-    price: 399,
-    icon: "🎁",
-    badge: "Save 20%",
-    category: "all",
-  },
-];
+
+
+
+
+
+
 let cart = [],
   currentFilter = "all",
   buyNowProduct = null;
@@ -228,32 +123,6 @@ function sendOrderToWhatsApp(info) {
   );
 }
 
-function makeCard(p) {
-  return `<div class="prod-card">
-    <div class="prod-thumb">${p.icon}${p.badge ? `<span class="prod-badge">${p.badge}</span>` : ""}</div>
-    <div class="prod-info"><h3>${p.name}</h3><p>${p.desc}</p></div>
-    <div class="prod-price">₹${p.price}</div>
-    <div class="prod-actions">
-      <button class="prod-cart" onclick="addToCart(${p.id})">🛒 Add</button>
-      <button class="prod-buy" onclick="openBuyNow(${p.id})">Buy Now</button>
-    </div>
-  </div>`;
-}
-function renderHome() {
-  const g = document.getElementById("home-prod-grid");
-  if (g) g.innerHTML = PRODUCTS.slice(0, 4).map(makeCard).join("");
-}
-function renderShop(f = "all") {
-  const g = document.getElementById("shop-prod-grid");
-  if (g)
-    g.innerHTML = (
-      f === "all"
-        ? PRODUCTS
-        : PRODUCTS.filter((p) => p.category === f || p.category === "all")
-    )
-      .map(makeCard)
-      .join("");
-}
 function filterProducts(cat, btn) {
   currentFilter = cat;
   document
