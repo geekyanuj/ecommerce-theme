@@ -186,24 +186,65 @@ function anneo_login()
 {
     check_ajax_referer('anneo_auth', 'nonce');
 
+    $login = sanitize_email($_POST['email'] ?? '');
+    $password = $_POST['password'] ?? '';
+
+    if (!is_email($login)) {
+        wp_send_json_error([
+            'message' => 'Please enter a valid email address.',
+        ]);
+    }
+
+    $user = get_user_by('email', $login);
+
+    if (!$user) {
+        wp_send_json_error([
+            'message' => 'No account exists with this email address.',
+        ]);
+    }
+
     $creds = [
-        'user_login' => sanitize_email($_POST['email']),
-        'user_password' => $_POST['password'],
+        'user_login' => $user->user_login,
+        'user_password' => $password,
         'remember' => true,
     ];
 
-    $user = wp_signon($creds, false);
+    $user = wp_signon($creds, is_ssl());
 
     if (is_wp_error($user)) {
 
-        wp_send_json_error([
-            'message' => 'Invalid email or password.',
-        ]);
+        $code = $user->get_error_code();
 
+        switch ($code) {
+
+            case 'invalid_username':
+                $message = 'No account was found with that email or username.';
+                break;
+
+            case 'incorrect_password':
+                $message = 'Incorrect password. Please try again.';
+                break;
+
+            case 'empty_username':
+                $message = 'Please enter your email.';
+                break;
+
+            case 'empty_password':
+                $message = 'Please enter your password.';
+                break;
+
+            default:
+                $message = 'Unable to log in. Please check your credentials and try again.';
+        }
+
+        wp_send_json_error([
+            'message' => $message,
+        ]);
     }
 
     wp_send_json_success([
-        'message' => 'Login successful!',
+        'message' => 'Welcome back!',
+        'redirect' => wc_get_page_permalink('myaccount'),
     ]);
 }
 
@@ -218,67 +259,202 @@ add_action('wp_ajax_nopriv_anneo_signup', 'anneo_signup');
  * Create a new WooCommerce customer account
  * and automatically log the user in.
  */
+
 function anneo_signup()
 {
     check_ajax_referer('anneo_auth', 'nonce');
 
-    $name = sanitize_text_field($_POST['name']);
-    $email = sanitize_email($_POST['email']);
-    $password = $_POST['password'];
+    $name = sanitize_text_field($_POST['name'] ?? '');
+    $email = sanitize_email($_POST['email'] ?? '');
+    $password = $_POST['password'] ?? '';
 
-    /**
-     * Check if email already exists.
-     */
-    if (email_exists($email)) {
+    /*
+    |--------------------------------------------------------------------------
+    | Required Fields
+    |--------------------------------------------------------------------------
+    */
 
+    if (empty($name) || empty($email) || empty($password)) {
         wp_send_json_error([
-            'message' => 'Email already exists.',
+            'message' => 'Please fill in all required fields.',
         ]);
-
     }
 
-    /**
-     * Generate username from email.
-     */
-    $username = sanitize_user(current(explode('@', $email)));
+    /*
+    |--------------------------------------------------------------------------
+    | Name Validation
+    |--------------------------------------------------------------------------
+    */
 
-    if (username_exists($username)) {
-        $username .= rand(1000, 9999);
+    if (strlen($name) < 3) {
+        wp_send_json_error([
+            'message' => 'Please enter your full name.',
+        ]);
     }
 
-    /**
-     * Create WordPress user.
-     */
-    $user_id = wp_create_user(
+    /*
+    |--------------------------------------------------------------------------
+    | Email Validation
+    |--------------------------------------------------------------------------
+    */
+
+    if (!is_email($email)) {
+        wp_send_json_error([
+            'message' => 'Please enter a valid email address.',
+        ]);
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Password Validation
+    |--------------------------------------------------------------------------
+    */
+
+    if (strlen($password) < 8) {
+        wp_send_json_error([
+            'message' => 'Password must be at least 8 characters long.',
+        ]);
+    }
+
+    if (!preg_match('/[A-Z]/', $password)) {
+        wp_send_json_error([
+            'message' => 'Password must contain at least one uppercase letter.',
+        ]);
+    }
+
+    if (!preg_match('/[a-z]/', $password)) {
+        wp_send_json_error([
+            'message' => 'Password must contain at least one lowercase letter.',
+        ]);
+    }
+
+    if (!preg_match('/[0-9]/', $password)) {
+        wp_send_json_error([
+            'message' => 'Password must contain at least one number.',
+        ]);
+    }
+
+    if (!preg_match('/[\W_]/', $password)) {
+        wp_send_json_error([
+            'message' => 'Password must contain at least one special character.',
+        ]);
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Generate Username
+    |--------------------------------------------------------------------------
+    */
+
+    $username = sanitize_user(strstr($email, '@', true));
+
+    if (empty($username)) {
+        $username = 'customer';
+    }
+
+    while (username_exists($username)) {
+        $username = sanitize_user(strstr($email, '@', true)) . wp_rand(1000, 9999);
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Create WooCommerce Customer
+    |--------------------------------------------------------------------------
+    */
+
+    $user_id = wc_create_new_customer(
+        $email,
         $username,
-        $password,
-        $email
+        $password
     );
 
     if (is_wp_error($user_id)) {
 
-        wp_send_json_error([
-            'message' => 'Unable to create account.',
-        ]);
+        switch ($user_id->get_error_code()) {
 
+            case 'registration-error-email-exists':
+                $message = 'An account with this email already exists.';
+                break;
+
+            case 'registration-error-invalid-email':
+                $message = 'Please enter a valid email address.';
+                break;
+
+            case 'registration-error-username-exists':
+                $message = 'Username already exists.';
+                break;
+
+            default:
+                $message = $user_id->get_error_message();
+        }
+
+        wp_send_json_error([
+            'message' => $message,
+        ]);
     }
 
-    /**
-     * Save customer information.
-     */
+    /*
+    |--------------------------------------------------------------------------
+    | Split Name
+    |--------------------------------------------------------------------------
+    */
+
+    $parts = preg_split('/\s+/', trim($name), 2);
+
+    $first_name = $parts[0];
+    $last_name = $parts[1] ?? '';
+
+    /*
+    |--------------------------------------------------------------------------
+    | Update User Profile
+    |--------------------------------------------------------------------------
+    */
+
     wp_update_user([
         'ID' => $user_id,
         'display_name' => $name,
-        'first_name' => $name,
+        'first_name' => $first_name,
+        'last_name' => $last_name,
     ]);
 
-    /**
-     * Automatically log in the new customer.
-     */
+    /*
+    |--------------------------------------------------------------------------
+    | WooCommerce Billing Details
+    |--------------------------------------------------------------------------
+    */
+
+    update_user_meta($user_id, 'billing_first_name', $first_name);
+    update_user_meta($user_id, 'billing_last_name', $last_name);
+
+    /*
+    |--------------------------------------------------------------------------
+    | WooCommerce Shipping Details
+    |--------------------------------------------------------------------------
+    */
+
+    update_user_meta($user_id, 'shipping_first_name', $first_name);
+    update_user_meta($user_id, 'shipping_last_name', $last_name);
+
+    /*
+    |--------------------------------------------------------------------------
+    | Automatically Login User
+    |--------------------------------------------------------------------------
+    */
+
     wp_set_current_user($user_id);
-    wp_set_auth_cookie($user_id);
+
+    wp_set_auth_cookie($user_id, true);
+
+    do_action('wp_login', $username, get_user_by('id', $user_id));
+
+    /*
+    |--------------------------------------------------------------------------
+    | Success Response
+    |--------------------------------------------------------------------------
+    */
 
     wp_send_json_success([
-        'message' => 'Welcome to ANNEO Fresh!',
+        'message' => 'Welcome to ANNEO Fresh! Your account has been created successfully.',
+        'redirect' => wc_get_page_permalink('myaccount'),
     ]);
 }

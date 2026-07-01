@@ -2065,10 +2065,33 @@ footer {
     box-shadow: var(--sh-lg);
 }
 
-#toast.show {
+/* #toast.show {
+    transform: translateX(-50%) translateY(0);
+    opacity: 1;
+} */
+
+#toast.show-success {
     transform: translateX(-50%) translateY(0);
     opacity: 1;
 }
+
+#toast.show-error {
+    transform: translateX(-50%) translateY(0);
+    opacity: 1;
+    background: #C62828;
+}
+
+#toast.show-warning {
+    transform: translateX(-50%) translateY(0);
+    opacity: 1;
+    background: #FF8F00;
+}
+
+.input-error {
+  border: 1px solid #e74c3c !important;
+  box-shadow: 0 0 0 3px rgba(231, 76, 60, 0.15);
+}
+
 
 #stb {
     position: fixed;
